@@ -2,6 +2,8 @@ import Network hiding (accept)
 import Network.Socket
 import Control.Concurrent
 import System.IO
+import System.Process
+import Data.Maybe
 
 data Request = Invalid | Delete | Head | Get | Post | Put deriving (Show, Eq)
  
@@ -37,10 +39,23 @@ getRequest xs = case head xs of
     "PUT" -> Put
     _ -> Invalid
 
+
+runPHP :: String -> IO (String)
+runPHP filename = do
+    (stdIn, stdOut, stdErr, p) <- 
+        createProcess 
+            (proc "/usr/bin/php" ["-f", filename]) 
+                {std_out = CreatePipe}
+    out <- case stdOut of 
+        Just x -> hGetContents x
+        Nothing -> readFile filename
+    return (out)
+
+
 processGetRequest :: Socket -> [String] -> IO()
 processGetRequest s args = do
     let path = if getPath args == "/" then "./index.html" else getRelativePath args
-    f <- readFile path
+    f <- runPHP path
     let sender = send s
     sender "HTTP/1.0 200 OK\r\nContent-Length: "
     sender $ show $ length f
