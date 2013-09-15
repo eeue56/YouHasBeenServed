@@ -9,7 +9,7 @@ import Data.List.Split
 
 -- Request data type
 -- Used for pattern matching
-data Request = Invalid | Option | Delete | Head | Get | Post | Put deriving (Show, Eq)
+data Request = Invalid | Options | Delete | Head | Get | Post | Put deriving (Show, Eq)
  
 main = withSocketsDo $ do
     putStrLn "listening"
@@ -56,6 +56,7 @@ getRequest xs = case head xs of
     "HEAD" -> Head
     "POST" -> Post
     "PUT" -> Put
+    "OPTIONS" -> Options
     _ -> Invalid
 
 -- returns get arguments from the url as tuples of length 2
@@ -117,12 +118,12 @@ processHeadRequest s args = do
     send s out
     sClose s
 
--- processes an option request
-processOptionRequest :: Socket -> [String] -> IO()
-processOptionRequest s _ = do
+-- processes an options request
+processOptionsRequest :: Socket -> [String] -> IO()
+processOptionsRequest s _ = do
     send s "HTTP/1.0 200 OK"
     send s $ "Allow: " ++ 
-        intercalate "," (map show [Head, Get, Option])
+        intercalate "," (map show [Head, Get, Options])
     send s "\r\n\r\n"
     sClose s
 
@@ -143,5 +144,5 @@ processRequest s = do
     where 
         helper Head = processHeadRequest
         helper Get = processGetRequest
-        helper Option = processOptionRequest
+        helper Options = processOptionsRequest
         helper _ = processInvalidRequest
