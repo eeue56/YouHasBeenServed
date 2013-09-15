@@ -44,7 +44,7 @@ runPHP :: String -> IO (String)
 runPHP filename = do
     (stdIn, stdOut, stdErr, p) <- 
         createProcess 
-            (proc "/usr/bin/php" ["-f", filename]) 
+            (proc "php" ["-f", filename]) 
                 {std_out = CreatePipe}
     out <- case stdOut of 
         Just x -> hGetContents x
