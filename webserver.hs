@@ -34,7 +34,6 @@ getRelativePath = (\x -> '.' : splitted x) . getPath
     where 
         splitted = head . splitOn "?"
 
-
 getRequest :: [String] -> Request
 getRequest xs = case head xs of
     "DELETE" -> Delete
@@ -45,10 +44,11 @@ getRequest xs = case head xs of
     _ -> Invalid
 
 getGetArguments :: String -> [(String, String)]
-
-getGetArguments xs = if elem '?' xs then [(x, y) | d <- ys, 
-                let (x, y) = helper $ splitOn "=" d, x /= ""]
-            else []
+getGetArguments xs = if elem '?' xs then 
+                        [(x, y) | d <- ys, 
+                         let (x, y) = helper $ splitOn "=" d, 
+                         x /= ""]
+                     else []
     where 
         helper :: [String] -> (String, String)
         helper [] = ("","")
@@ -70,16 +70,27 @@ runPHP filename xs = do
         where
             arguments = ["-f", filename] ++ [x ++ "=" ++ y | (x, y) <- xs]
 
-processGetRequest :: Socket -> [String] -> IO()
-processGetRequest s args = do
+runGetRequest :: [String] -> IO((String, String))
+runGetRequest args = do 
     let getArgs = getGetArguments $ getPath args
     let path = if getPath args == "/" then "./index.html" else getRelativePath args
     f <- runPHP path getArgs
-    let sender = send s
-    sender "HTTP/1.0 200 OK\r\nContent-Length: "
-    sender $ show $ length f
-    sender "\r\n\r\n"
-    sender f
+    let out = concat ["HTTP/1.0 200 OK\r\nContent-Length: ",
+            show $ length f,
+            "\r\n\r\n"]
+    return ((out, f))
+
+processGetRequest :: Socket -> [String] -> IO()
+processGetRequest s args = do
+    (out, f) <- runGetRequest args
+    send s out
+    send s f
+    sClose s
+
+processHeadRequest :: Socket -> [String] -> IO()
+processHeadRequest s args = do
+    (out, _) <- runGetRequest args
+    send s out
     sClose s
 
 processInvalidRequest :: Socket -> [String] -> IO()
@@ -94,5 +105,6 @@ processRequest s = do
     let requestType = getRequest args
     helper requestType s args
     where 
+        helper Head = processHeadRequest
         helper Get = processGetRequest
         helper _ = processInvalidRequest
