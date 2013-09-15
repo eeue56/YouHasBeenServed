@@ -4,11 +4,12 @@ import Control.Concurrent
 import System.IO
 import System.Process
 import Data.Maybe
+import Data.List
 import Data.List.Split
 
 -- Request data type
 -- Used for pattern matching
-data Request = Invalid | Delete | Head | Get | Post | Put deriving (Show, Eq)
+data Request = Invalid | Option | Delete | Head | Get | Post | Put deriving (Show, Eq)
  
 main = withSocketsDo $ do
     putStrLn "listening"
@@ -116,12 +117,22 @@ processHeadRequest s args = do
     send s out
     sClose s
 
+-- processes an option request
+processOptionRequest :: Socket -> [String] -> IO()
+processOptionRequest s _ = do
+    send s "HTTP/1.0 200 OK"
+    send s $ "Allow: " ++ 
+        intercalate "," (map show [Head, Get, Option])
+    send s "\r\n\r\n"
+    sClose s
+
 -- processes an invalid request
 processInvalidRequest :: Socket -> [String] -> IO()
 processInvalidRequest s _ = do
     send s "HTTP/1.0 400 Bad Request"
     send s "\r\n\r\n"
     sClose s
+
 
 -- calls the relevant function for the request
 processRequest :: Socket -> IO()
@@ -132,4 +143,5 @@ processRequest s = do
     where 
         helper Head = processHeadRequest
         helper Get = processGetRequest
+        helper Option = processOptionRequest
         helper _ = processInvalidRequest
