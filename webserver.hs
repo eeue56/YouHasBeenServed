@@ -4,6 +4,8 @@ import Control.Concurrent
 import System.IO
 import System.Process
 import Data.Maybe
+import Data.List.Split
+
 
 data Request = Invalid | Delete | Head | Get | Post | Put deriving (Show, Eq)
  
@@ -25,10 +27,13 @@ getArgs s = do
     return (words $ t)
 
 getPath :: [String] -> String
-getPath xs = xs !! 1
+getPath xs = xs !! 1 
 
 getRelativePath :: [String] -> String
-getRelativePath xs = '.' : (xs !! 1)
+getRelativePath = (\x -> '.' : splitted x) . getPath
+    where 
+        splitted = head . splitOn "?"
+
 
 getRequest :: [String] -> Request
 getRequest xs = case head xs of
@@ -39,23 +44,37 @@ getRequest xs = case head xs of
     "PUT" -> Put
     _ -> Invalid
 
+getGetArguments :: String -> [(String, String)]
 
-runPHP :: String -> IO (String)
-runPHP filename = do
+getGetArguments xs = if elem '?' xs then [(x, y) | d <- ys, 
+                let (x, y) = helper $ splitOn "=" d, x /= ""]
+            else []
+    where 
+        helper :: [String] -> (String, String)
+        helper [] = ("","")
+        helper [x] = (x, "")
+        helper (x:xs) = (x, concat $ xs)
+        ys = splitOn "&" $ tail $ dropWhile (/= '?') xs 
+
+runPHP :: String -> [(String, String)] -> IO (String)
+runPHP filename xs = do
+    putStrLn $ show $ arguments
     (stdIn, stdOut, stdErr, p) <- 
         createProcess 
-            (proc "php" ["-f", filename]) 
+            (proc "php-cgi" arguments) 
                 {std_out = CreatePipe}
     out <- case stdOut of 
         Just x -> hGetContents x
         Nothing -> readFile filename
     return (out)
-
+        where
+            arguments = ["-f", filename] ++ [x ++ "=" ++ y | (x, y) <- xs]
 
 processGetRequest :: Socket -> [String] -> IO()
 processGetRequest s args = do
+    let getArgs = getGetArguments $ getPath args
     let path = if getPath args == "/" then "./index.html" else getRelativePath args
-    f <- runPHP path
+    f <- runPHP path getArgs
     let sender = send s
     sender "HTTP/1.0 200 OK\r\nContent-Length: "
     sender $ show $ length f
