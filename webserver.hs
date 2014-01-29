@@ -11,6 +11,7 @@ import Data.List.Split
 -- Used for pattern matching
 data Request = Invalid | Options | Delete | Head | Get | Post | Put deriving (Show, Eq)
 type OutputGenerator = String -> [(String, String)] -> IO (String)
+type ServerOperation = Socket -> [String] -> IO()
  
 main = withSocketsDo $ do
     putStrLn "listening"
@@ -107,7 +108,7 @@ runGetRequest args gen = do
     return ((out, f))
 
 -- processes a get request
-processGetRequest :: Socket -> [String] -> IO()
+processGetRequest :: ServerOperation
 processGetRequest s args = do
     (out, f) <- runGetRequest args runPHP
     send s out
@@ -115,14 +116,14 @@ processGetRequest s args = do
     sClose s
 
 -- processes a head request
-processHeadRequest :: Socket -> [String] -> IO()
+processHeadRequest :: ServerOperation
 processHeadRequest s args = do
     (out, _) <- runGetRequest args runPHP
     send s out
     sClose s
 
 -- processes an options request
-processOptionsRequest :: Socket -> [String] -> IO()
+processOptionsRequest :: ServerOperation
 processOptionsRequest s _ = do
     send s "HTTP/1.0 200 OK"
     send s $ "Allow: " ++ 
@@ -131,7 +132,7 @@ processOptionsRequest s _ = do
     sClose s
 
 -- processes an invalid request
-processInvalidRequest :: Socket -> [String] -> IO()
+processInvalidRequest :: ServerOperation
 processInvalidRequest s _ = do
     send s "HTTP/1.0 400 Bad Request"
     send s "\r\n\r\n"
