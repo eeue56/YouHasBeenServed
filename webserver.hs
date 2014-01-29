@@ -10,6 +10,7 @@ import Data.List.Split
 -- Request data type
 -- Used for pattern matching
 data Request = Invalid | Options | Delete | Head | Get | Post | Put deriving (Show, Eq)
+type OutputGenerator = String -> [(String, String)] -> IO (String)
  
 main = withSocketsDo $ do
     putStrLn "listening"
@@ -30,6 +31,7 @@ mainLoop socket = do
 getArgs :: Socket -> IO ([String])
 getArgs s = do  
     b <- recv s 1024
+    putStrLn $ show $ b
     let t = filter (/='"') (show b)
     return (words $ t)
 
@@ -75,9 +77,10 @@ getGetArguments xs = if elem '?' xs then
         helper (x:xs) = (x, concat $ xs)
         ys = splitOn "&" $ tail $ dropWhile (/= '?') xs 
 
+
 -- runs php on the given filename with the given GET arguments
 -- returns the output from php-cgi 
-runPHP :: String -> [(String, String)] -> IO (String)
+runPHP :: OutputGenerator
 runPHP filename xs = do
     putStrLn $ show $ arguments
     (stdIn, stdOut, stdErr, p) <- 
@@ -93,11 +96,11 @@ runPHP filename xs = do
 
 -- runs a get request
 -- returns a tuple of the header and the file text 
-runGetRequest :: [String] -> IO((String, String))
-runGetRequest args = do 
+runGetRequest :: [String] -> OutputGenerator -> IO((String, String))
+runGetRequest args gen = do 
     let getArgs = getGetArguments $ getPath args
     let path = if getPath args == "/" then "./index.html" else getRelativePath args
-    f <- runPHP path getArgs
+    f <- gen path getArgs
     let out = concat ["HTTP/1.0 200 OK\r\nContent-Length: ",
             show $ length f,
             "\r\n\r\n"]
@@ -106,7 +109,7 @@ runGetRequest args = do
 -- processes a get request
 processGetRequest :: Socket -> [String] -> IO()
 processGetRequest s args = do
-    (out, f) <- runGetRequest args
+    (out, f) <- runGetRequest args runPHP
     send s out
     send s f
     sClose s
@@ -114,7 +117,7 @@ processGetRequest s args = do
 -- processes a head request
 processHeadRequest :: Socket -> [String] -> IO()
 processHeadRequest s args = do
-    (out, _) <- runGetRequest args
+    (out, _) <- runGetRequest args runPHP
     send s out
     sClose s
 
