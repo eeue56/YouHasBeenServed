@@ -1,3 +1,5 @@
+{-# LANGUAGE ParallelListComp, BangPatterns #-}
+
 import Network hiding (accept)
 import Network.Socket
 import Control.Concurrent
@@ -84,16 +86,30 @@ getGetArguments xs = if elem '?' xs then
 runPHP :: OutputGenerator
 runPHP filename xs = do
     putStrLn $ show $ arguments
+    
     (stdIn, stdOut, stdErr, p) <- 
         createProcess 
             (proc "php-cgi" arguments) 
-                {std_out = CreatePipe}
+                {std_out = CreatePipe,
+                 std_err = CreatePipe}
+    
     out <- case stdOut of 
         Just x -> hGetContents x
         Nothing -> readFile filename
+
+    e <- case stdErr of
+        Just x -> do
+            t <- hGetContents x
+            putStrLn "Error: "
+            putStrLn $ show $ t
+        Nothing -> putStrLn ""
     return (out)
         where
             arguments = ["-f", filename] ++ [x ++ "=" ++ y | (x, y) <- xs]
+
+runHTML :: OutputGenerator
+runHTML filename xs = 
+    readFile filename
 
 -- runs a get request
 -- returns a tuple of the header and the file text 
