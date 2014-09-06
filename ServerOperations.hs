@@ -14,12 +14,17 @@ where
 
     import Data.List
 
+    import qualified Data.Map as M
+
     import Network.Socket (send, Socket, sClose)
 
 
     type ServerOperation = Socket -> [String] -> IO()
 
-    impementedRequests = [Head, Get, Options]
+    impementedRequests = M.fromList [
+        (Head, processHeadRequest),
+        (Get, processGetRequest),
+        (Options, processOptionsRequest)]
 
 
     -- runs a get request
@@ -56,7 +61,7 @@ where
     processOptionsRequest s _ = do
         sendHttpOk s
         send s $ "Allow: " ++ 
-            intercalate "," (map show impementedRequests)
+            intercalate "," (map show $ M.keys impementedRequests)
         sClose s
 
     -- processes an invalid request
@@ -68,9 +73,8 @@ where
     processRequest s = do
         args <- getArgs s
         let requestType = getRequest args
-        helper requestType s args
-        where 
-            helper Head = processHeadRequest
-            helper Get = processGetRequest
-            helper Options = processOptionsRequest
-            helper _ = processInvalidRequest
+        let handler = M.lookup requestType impementedRequests
+
+        case handler of 
+            Just x -> x s args
+            Nothing -> processInvalidRequest s args

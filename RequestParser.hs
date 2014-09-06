@@ -11,7 +11,13 @@ where
 
     -- Request data type
     -- Used for pattern matching
-    data Request = Invalid | Options | Delete | Head | Get | Post | Put deriving (Show, Eq)
+    data Request = Invalid | 
+        Options | 
+        Delete | 
+        Head | 
+        Get | 
+        Post | 
+        Put deriving (Show, Eq, Ord)
 
 
     -- returns the path from a request
