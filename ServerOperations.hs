@@ -1,3 +1,5 @@
+{-# LANGUAGE ParallelListComp, BangPatterns #-}
+
 module ServerOperations (
     processGetRequest, 
     processHeadRequest, 
@@ -11,10 +13,8 @@ where
     import OutputGenerators
 
     import Data.List
-    import Data.List.Split
 
-    import Network
-    import Network.Socket (send, Socket)
+    import Network.Socket (send, Socket, sClose)
 
 
     type ServerOperation = Socket -> [String] -> IO()

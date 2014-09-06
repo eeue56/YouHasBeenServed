@@ -1,3 +1,5 @@
+{-# LANGUAGE ParallelListComp, BangPatterns #-}
+
 module OutputGenerators (
     runPHP,
     runHTML,

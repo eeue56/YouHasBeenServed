@@ -7,13 +7,12 @@ module RequestParser (
     getGetArguments,
     Request(..))
 where
-    import Data.List
     import Data.List.Split
 
     -- Request data type
     -- Used for pattern matching
     data Request = Invalid | Options | Delete | Head | Get | Post | Put deriving (Show, Eq)
-    
+
 
     -- returns the path from a request
     -- assumes xs[1] === path
