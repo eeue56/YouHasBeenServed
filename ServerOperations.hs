@@ -32,6 +32,7 @@ where
     runGetRequest args gen = do 
         let getArgs = getGetArguments $ getPath args
         let path = if getPath args == "/" then "./index.html" else getRelativePath args
+        putStrLn $ concat ["Path hit: ", path]
         f <- gen path getArgs
         let out = concat ["Content-Length: ",
                 show $ length f,
