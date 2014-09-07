@@ -12,11 +12,24 @@ import Data.Maybe
 
 defaultPort = 5002
 
+findArgument :: [String] -> [String] -> Maybe Int
+findArgument [] _ = Nothing
+findArgument _ [] = Nothing
+findArgument args (flag:flags) = 
+    case elemIndex flag args of 
+        Just x -> Just x
+        Nothing -> findArgument args flags
+
 portToUse :: [String] -> PortID
 portToUse args = 
-    case elemIndex "-p" args of
-        Just x -> PortNumber $ fromIntegral (read (args !! (x + 1)) :: Int)
+    case findArgument args ["-p", "--port"] of
+        Just x -> PortNumber $ cleanNumber x
         Nothing -> PortNumber defaultPort 
+    where
+        cleanNumber :: Int -> PortNumber
+        cleanNumber x
+            | x + 1 < length args = fromIntegral (read $ args !! (x + 1) :: Int)
+            | otherwise = defaultPort
 
  
 main = withSocketsDo $ do
