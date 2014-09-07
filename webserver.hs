@@ -4,10 +4,13 @@ import Network hiding (accept)
 import Network.Socket
 import Control.Concurrent
 import ServerOperations
+
+
+portToUse = 5002
  
 main = withSocketsDo $ do
     putStrLn "listening"
-    socket <- listenOn $ PortNumber 5002
+    socket <- listenOn $ PortNumber portToUse
     mainLoop socket
 
 -- main loop

@@ -18,7 +18,6 @@ where
 
     import Network.Socket (send, Socket, sClose)
 
-
     type ServerOperation = Socket -> [String] -> IO()
 
     impementedRequests = M.fromList [

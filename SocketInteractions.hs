@@ -6,8 +6,8 @@ module SocketInteractions (getArgs,
     sendHttpOk,
     sendHttpBadRequest)
 where
-    import Network hiding (accept, sClose)
-    import Network.Socket
+    import Network.Socket 
+
 
     sendHeader :: String -> Socket -> IO()
     sendHeader header socket = send socket (header ++ "\r\n") >> return () 
