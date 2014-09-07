@@ -34,10 +34,10 @@ where
         let path = if getPath args == "/" then "./index.html" else getRelativePath args
         putStrLn $ concat ["Path hit: ", path]
         f <- gen path getArgs
-        let out = concat ["Content-Length: ",
+        let header = concat ["Content-Length: ",
                 show $ length f,
                 "\r\n\r\n"]
-        return ((out, f))
+        return ((header, f))
 
     -- processes a get request
     processGetRequest :: ServerOperation
@@ -73,8 +73,7 @@ where
     processRequest s = do
         args <- getArgs s
         let requestType = getRequest args
-        let handler = M.lookup requestType impementedRequests
 
-        case handler of 
+        case M.lookup requestType impementedRequests of 
             Just x -> x s args
             Nothing -> processInvalidRequest s args
