@@ -1,5 +1,3 @@
-{-# LANGUAGE ParallelListComp, BangPatterns #-}
-
 module OutputGenerators (
     runPHP,
     runHTML,
@@ -14,9 +12,7 @@ where
     -- runs php on the given filename with the given GET arguments
     -- returns the output from php-cgi 
     runPHP :: OutputGenerator
-    runPHP filename xs = do
-        putStrLn $ show $ arguments
-        
+    runPHP filename xs = do        
         (stdIn, stdOut, stdErr, p) <- 
             createProcess 
                 (proc "php-cgi" arguments) 
@@ -30,9 +26,13 @@ where
         e <- case stdErr of
             Just x -> do
                 t <- hGetContents x
-                putStrLn "Error: "
-                putStrLn $ show $ t
-            Nothing -> putStrLn ""
+                if t /= "" then
+                    do 
+                        putStrLn "Error: " 
+                        putStrLn $ show $ t 
+                else 
+                    return ()
+            Nothing -> return ()
         return (out)
             where
                 arguments = ["-f", filename] ++ [x ++ "=" ++ y | (x, y) <- xs]

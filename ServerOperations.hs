@@ -41,7 +41,7 @@ where
     -- processes a get request
     processGetRequest :: ServerOperation
     processGetRequest s args = do
-        (out, f) <- runGetRequest args runHTML
+        (out, f) <- runGetRequest args runPHP
         sendHttpOk s
         send s out
         send s f
@@ -50,7 +50,7 @@ where
     -- processes a head request
     processHeadRequest :: ServerOperation
     processHeadRequest s args = do
-        (out, _) <- runGetRequest args runHTML
+        (out, _) <- runGetRequest args runPHP
         sendHttpOk s
         send s out
         sClose s
