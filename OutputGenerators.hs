@@ -27,9 +27,7 @@ where
             Just x -> do
                 t <- hGetContents x
                 if t /= "" then
-                    do 
-                        putStrLn "Error: " 
-                        putStrLn $ show $ t 
+                    putStrLn "Error: " >> (putStrLn $ show $ t) 
                 else 
                     return ()
             Nothing -> return ()
