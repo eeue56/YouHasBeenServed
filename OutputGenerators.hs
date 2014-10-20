@@ -1,11 +1,13 @@
 module OutputGenerators (
     runPHP,
     runHTML,
+    runStore,
     OutputGenerator)
 where
     import System.Process
     import System.IO
     import Data.Maybe
+    import qualified Data.Map as M
 
     type OutputGenerator = String -> [(String, String)] -> IO (String)
 
@@ -38,3 +40,14 @@ where
     runHTML :: OutputGenerator
     runHTML filename xs = 
         readFile filename
+
+    runStore :: OutputGenerator
+    runStore filename xs = do
+        out <- case dataToWrite of 
+            Just x -> appendFile filename x >> return ("Success") 
+            Nothing -> return ("Failed")
+
+        return (out)
+        where   
+            dataToWrite = M.lookup "toStore" mappedXs 
+            mappedXs = M.fromList xs

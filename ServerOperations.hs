@@ -42,7 +42,7 @@ where
     -- processes a get request
     processGetRequest :: ServerOperation
     processGetRequest s args = do
-        (out, f) <- runGetRequest args runPHP
+        (out, f) <- runGetRequest args runStore
         sendHttpOk s
         send s out
         send s f
